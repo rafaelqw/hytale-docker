@@ -4,9 +4,10 @@
 
 **Production-ready Docker container for Hytale dedicated servers**
 
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/romariin/hytale-docker)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/rxmarin/hytale-docker)
 [![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/Docs-hytale.romarin.dev-blue)](https://hytale.romarin.dev)
 
 *Automated authentication • Auto-updates • Secure by default*
 
@@ -49,21 +50,15 @@ Connect to your server at `your-ip:5520` using the Hytale client.
 
 ## 📖 Documentation
 
-Full documentation is available in the `docs/` folder. To run it locally:
-
-```bash
-cd docs
-npm install
-npm run dev
-```
+📚 **[hytale.romarin.dev](https://hytale.romarin.dev)** — Full documentation
 
 Topics covered:
-- Quick Start Guide
-- Configuration
-- Authentication
-- Network Setup
-- Security
-- Troubleshooting
+- [Quick Start Guide](https://hytale.romarin.dev/docs/quick-start)
+- [Configuration](https://hytale.romarin.dev/docs/configuration)
+- [Authentication](https://hytale.romarin.dev/docs/authentication)
+- [Network Setup](https://hytale.romarin.dev/docs/network-setup)
+- [Security](https://hytale.romarin.dev/docs/security)
+- [Troubleshooting](https://hytale.romarin.dev/docs/troubleshooting)
 
 ---
 
@@ -90,9 +85,10 @@ npm run dev
 
 <div align="center">
 
-**Made with ❤️ for the Hytale community**
+**Made with ❤️ by [romarin.dev](https://romarin.dev)**
 
-[Report Bug](https://github.com/romariin/hytale-docker/issues) •
-[Request Feature](https://github.com/romariin/hytale-docker/issues)
+[Documentation](https://hytale.romarin.dev) •
+[Report Bug](https://github.com/rxmarin/hytale-docker/issues) •
+[Request Feature](https://github.com/rxmarin/hytale-docker/issues)
 
 </div>
