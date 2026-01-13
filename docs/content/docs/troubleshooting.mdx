@@ -1,0 +1,379 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Hytale Docker
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Troubleshooting
+
+Solutions to common issues running your Hytale server.
+
+## Server Won't Start
+
+### Container Exits Immediately
+
+**Check logs for the error:**
+
+```bash
+docker compose logs hytale-server
+```
+
+**Common causes:**
+
+1. **Java version too old** - Image includes Java 25+, but if building custom image, ensure Java 25+
+2. **hytale-downloader missing** - Verify the Dockerfile includes hytale-downloader
+3. **Download failed** - Network issues or auth problems with hytale-downloader
+
+### Download Fails
+
+**Symptoms:**
+- "Download failed" in logs
+- "No zip file found"
+
+**Solutions:**
+
+1. Check network connectivity:
+   ```bash
+   docker compose exec hytale-server ping -c 4 google.com
+   ```
+
+2. Re-run with fresh download:
+   ```bash
+   docker compose down
+   FORCE_UPDATE=true docker compose up -d
+   ```
+
+3. Check hytale-downloader authentication (may need to re-auth the downloader itself)
+
+## Authentication Issues
+
+### Auto-Auth Not Working
+
+**Symptoms:**
+- Server starts but stays unauthenticated
+- No device auth URL appears
+
+**Check AUTO_AUTH is enabled:**
+
+```yaml
+environment:
+  AUTO_AUTH: "true"
+```
+
+**Verify logs:**
+
+```bash
+docker compose logs | grep -i auth
+```
+
+### Persistence Not Working (Re-auth Every Restart)
+
+**Symptoms:**
+- Device auth required on every restart
+- Never see "Successfully authenticated from encrypted file"
+
+**Solutions:**
+
+1. **Mount machine-id:**
+   ```yaml
+   volumes:
+     - /etc/machine-id:/etc/machine-id:ro
+   ```
+
+2. **Persist home directory:**
+   ```yaml
+   volumes:
+     - hytale-home:/home/hytale
+   ```
+
+3. **Check if auth succeeded:**
+   ```bash
+   docker compose logs | grep "persistence Encrypted"
+   ```
+
+<Callout type="warn">
+Both `/etc/machine-id` AND `hytale-home` volume are required for persistence to work.
+</Callout>
+
+### Device Code Expires
+
+Device codes are valid for 15 minutes. If expired:
+
+```bash
+docker compose restart
+docker compose logs -f
+```
+
+Complete authorization faster this time.
+
+### Can't Access Auth URL
+
+1. Check internet connectivity
+2. Try accessing URL from a different device
+3. Verify no firewall blocking Hytale domains
+
+## Console/Command Issues
+
+### Commands Don't Work via `docker attach`
+
+**Symptoms:**
+- Typing commands shows text but nothing happens
+- Commands appear but server doesn't respond
+
+**Ensure these settings in docker-compose.yml:**
+
+```yaml
+services:
+  hytale:
+    stdin_open: true
+    tty: true
+```
+
+**Rebuild if settings were changed:**
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+### Can't Detach from Container
+
+Press `Ctrl+P` then `Ctrl+Q` (two key sequences, not together).
+
+If that doesn't work, open a new terminal and:
+
+```bash
+docker compose restart
+```
+
+## Connection Issues
+
+### Players Can't Connect
+
+**Checklist:**
+
+1. **Server is running:**
+   ```bash
+   docker compose ps
+   ```
+   
+2. **Port is UDP:**
+   ```yaml
+   ports:
+     - "5520:5520/udp"  # Must have /udp!
+   ```
+
+3. **Server is authenticated:**
+   ```bash
+   docker compose logs | grep "Authentication successful"
+   ```
+
+4. **Firewall allows UDP 5520:**
+   ```bash
+   # Linux
+   sudo ufw allow 5520/udp
+   
+   # Windows
+   netsh advfirewall firewall add rule name="Hytale" dir=in action=allow protocol=UDP localport=5520
+   ```
+
+5. **Router port forwarding configured for UDP**
+
+### Connection Timeout
+
+**Causes:**
+- Firewall blocking UDP
+- Wrong protocol (TCP instead of UDP)
+- Router not forwarding
+- ISP blocking UDP
+
+**Debug steps:**
+
+1. Test locally first: `localhost:5520`
+2. Test on LAN: `192.168.x.x:5520`
+3. Test externally with correct public IP
+
+## Performance Issues
+
+### Out of Memory
+
+**Symptoms:**
+- `java.lang.OutOfMemoryError`
+- Container crashes/restarts
+
+**Increase memory:**
+
+```yaml
+environment:
+  JAVA_OPTS: "-Xms6G -Xmx8G -XX:+UseG1GC"
+
+deploy:
+  resources:
+    limits:
+      memory: 10G
+```
+
+### Slow Startup
+
+1. **Enable AOT cache:**
+   ```yaml
+   environment:
+     USE_AOT_CACHE: "true"
+   ```
+
+2. **Use SSD storage**
+
+3. **First startup is always slower** (downloads + AOT cache generation)
+
+### Server Lag
+
+1. **Check resource usage:**
+   ```bash
+   docker stats hytale-server
+   ```
+
+2. **Increase memory allocation**
+
+3. **Check host system resources**
+
+## Volume Issues
+
+### Permission Denied
+
+**Symptoms:**
+- Can't write to server files
+- "Permission denied" in logs
+
+**Fix permissions:**
+
+```bash
+docker compose down
+
+# Find volume path
+docker volume inspect hytale-docker_hytale-data | grep Mountpoint
+
+# Fix ownership (container runs as UID 1000)
+sudo chown -R 1000:1000 /path/to/volume
+
+docker compose up -d
+```
+
+### Data Lost After Restart
+
+**Ensure volumes are defined:**
+
+```yaml
+volumes:
+  hytale-data:
+  hytale-home:
+```
+
+**Check volume exists:**
+
+```bash
+docker volume ls | grep hytale
+```
+
+## Update Issues
+
+### Server Won't Update
+
+**Force re-download:**
+
+```bash
+docker compose down
+FORCE_UPDATE=true docker compose up -d
+```
+
+**Or rebuild image:**
+
+```bash
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+### Check Current Version
+
+The downloader version is saved to `/server/.downloader_version`:
+
+```bash
+docker compose exec hytale-server cat /server/.downloader_version
+```
+
+## Docker Issues
+
+### Image Build Fails
+
+```bash
+# Clean rebuild
+docker compose build --no-cache
+
+# Or pull latest
+docker compose pull
+```
+
+### Container Won't Stop
+
+```bash
+# Force stop
+docker compose kill
+
+# Remove
+docker compose rm -f
+```
+
+## Advanced Debugging
+
+### Access Container Shell
+
+```bash
+docker compose exec hytale-server bash
+```
+
+Inside:
+```bash
+# Check files
+ls -la /server/
+
+# Check processes
+ps aux
+
+# Check logs
+cat /tmp/server_output.log
+```
+
+### Export Full Logs
+
+```bash
+docker compose logs > hytale-debug.log
+```
+
+### Watch Real-time Output
+
+```bash
+docker compose logs -f --tail=100
+```
+
+## Getting Help
+
+If still stuck:
+
+1. **Search issues:** https://github.com/romariin/hytale-docker/issues
+
+2. **Create issue with:**
+   - Full error logs
+   - Your `docker-compose.yml`
+   - Docker version: `docker --version`
+   - OS and version
+
+3. **Official resources:**
+   - [Hytale Server Manual](https://support.hytale.com/hc/en-us/articles/45326769420827-Hytale-Server-Manual)
+   - [Docker Documentation](https://docs.docker.com)
+
+## Next Steps
+
+- [Review configuration](/docs/configuration)
+- [Check security settings](/docs/security)
+- [Understand authentication](/docs/authentication)

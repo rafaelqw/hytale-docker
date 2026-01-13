@@ -1,0 +1,218 @@
+---
+title: Authentication
+description: Understanding Hytale server authentication
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Authentication
+
+Hytale servers require authentication to operate. This guide explains how the automatic authentication system works.
+
+## Automatic Authentication
+
+The container handles authentication **automatically** using the built-in `/auth` commands. No manual intervention is required after the first device authorization.
+
+<Callout type="info">
+Set `AUTO_AUTH=true` (default) to enable automatic authentication. The container will handle everything for you.
+</Callout>
+
+## How It Works
+
+<Steps>
+
+### First Startup
+
+When you start the server for the first time:
+1. The server boots and waits for authentication
+2. The container automatically sends `/auth login device`
+3. A device authorization URL and code appear in the logs
+4. You complete authorization in your browser
+
+### User Authorization
+
+You need to:
+1. Visit the URL shown in the logs
+2. Log in with your Hytale account
+3. Enter the verification code
+4. Authorize the server
+
+### Automatic Persistence
+
+Once authorized:
+- The container automatically sends `/auth persistence Encrypted`
+- Credentials are encrypted and stored in the `hytale-home` volume
+- The server is ready to accept connections
+
+### Subsequent Restarts
+
+On restart, the container checks if persistence is working:
+- **If persistence OK**: Logs show "Successfully authenticated from encrypted file" - no action needed
+- **If persistence failed**: Automatically re-runs `/auth login device` to re-authenticate
+
+</Steps>
+
+## Authentication Flow
+
+```
+┌─────────────┐                              ┌─────────────┐
+│   Server    │                              │   Hytale    │
+│  Container  │                              │   OAuth2    │
+└──────┬──────┘                              └──────┬──────┘
+       │                                            │
+       │  1. Server boots                           │
+       │                                            │
+       │  2. Auto-send: /auth login device          │
+       │───────────────────────────────────────────>│
+       │                                            │
+       │  3. Device code + URL (shown in logs)      │
+       │<───────────────────────────────────────────│
+       │                                            │
+       │           [User visits URL & authorizes]   │
+       │                                            │
+       │  4. "Authentication successful"            │
+       │<───────────────────────────────────────────│
+       │                                            │
+       │  5. Auto-send: /auth persistence Encrypted │
+       │───────────────────────────────────────────>│
+       │                                            │
+       │  6. Credentials encrypted & stored         │
+       │                                            │
+       ▼  Server ready!                             ▼
+```
+
+## Viewing Authentication Status
+
+Check authentication in the logs:
+
+```bash
+docker compose logs hytale-server | grep -i auth
+```
+
+**Success indicators:**
+- ✅ `"Successfully authenticated from encrypted file"` - Persistence working
+- ✅ `"Authentication successful"` - Device auth completed
+- ✅ `"Auto-auth complete with encrypted persistence"` - Full auto-auth done
+
+**Action needed:**
+- ⏳ `"Server ready, sending /auth login device..."` - Check logs for URL
+- ❌ Device URL/code displayed - Complete authorization in browser
+
+## Manual Authentication Commands
+
+If you need to manage authentication manually, attach to the container:
+
+```bash
+docker attach hytale-server
+```
+
+Then use these commands:
+
+| Command | Description |
+|---------|-------------|
+| `/auth status` | Check current authentication status |
+| `/auth login device` | Start device authorization flow |
+| `/auth persistence Encrypted` | Enable encrypted credential storage |
+| `/auth persistence None` | Disable persistence (not recommended) |
+| `/auth logout` | Log out and clear credentials |
+
+<Callout type="warn">
+Press `Ctrl+P` then `Ctrl+Q` to detach from the container without stopping it.
+</Callout>
+
+## Persistence Requirements
+
+For encrypted persistence to work across restarts, you need:
+
+### 1. Machine ID (Required)
+
+Mount your host's machine ID:
+
+```yaml
+volumes:
+  - /etc/machine-id:/etc/machine-id:ro
+```
+
+<Callout type="warn">
+Without `/etc/machine-id`, the encryption key changes on each container restart, breaking persistence.
+</Callout>
+
+### 2. Home Volume (Required)
+
+Persist the home directory where credentials are stored:
+
+```yaml
+volumes:
+  - hytale-home:/home/hytale
+```
+
+## Re-authentication
+
+Re-authentication happens automatically when needed. However, you may need to manually re-authenticate if:
+
+### Persistence Files Corrupted
+
+```bash
+# Clear auth data and restart
+docker compose down
+docker volume rm hytale-home
+docker compose up -d
+docker compose logs -f
+```
+
+### Machine ID Changed
+
+If your host's `/etc/machine-id` changed:
+1. The encrypted credentials can't be decrypted
+2. Container will automatically re-run device auth
+3. Complete the authorization flow again
+
+### Intentional Logout
+
+```bash
+docker attach hytale-server
+# Type: /auth logout
+# Then press Ctrl+P, Ctrl+Q to detach
+docker compose restart
+```
+
+## Disabling Auto-Auth
+
+To manage authentication manually:
+
+```yaml
+environment:
+  AUTO_AUTH: "false"
+```
+
+Then use `docker attach` and run `/auth` commands yourself.
+
+## Troubleshooting
+
+### "Authentication required" keeps appearing
+
+1. Check that `/etc/machine-id` is mounted
+2. Verify `hytale-home` volume is persistent
+3. Check logs for "Successfully authenticated from encrypted file"
+
+### Device code expires (15 minutes)
+
+Complete authorization faster, or:
+
+```bash
+docker compose restart
+docker compose logs -f
+```
+
+### Can't access authorization URL
+
+1. Check internet connectivity
+2. Verify firewall isn't blocking Hytale domains
+3. Try accessing from a different device
+
+## Next Steps
+
+- [Configure your server](/docs/configuration)
+- [Set up networking](/docs/network-setup)
+- [Review security settings](/docs/security)

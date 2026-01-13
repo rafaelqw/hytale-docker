@@ -1,0 +1,71 @@
+# =============================================================================
+# Docker Ignore File for Hytale Server
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+LICENSE
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Development files
+*.log
+*.tmp
+*.temp
+.env.local
+.env.*.local
+
+# Test files
+tests/
+test/
+__tests__/
+*.test.*
+*.spec.*
+
+# Build artifacts
+*.tar
+*.tar.gz
+*.zip
+
+# Docker files (don't include in build context)
+docker-compose*.yml
+.dockerignore
+
+# Local configuration (should be mounted as volumes)
+config.json
+permissions.json
+bans.json
+whitelist.json
+
+# Server data (should be volumes)
+universe/
+mods/
+logs/
+tokens/
+.cache/
+Server/
+Assets.zip
+game.zip
+.version
+
+# Backups
+*.backup
+*.bak
+backups/

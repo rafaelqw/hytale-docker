@@ -1,0 +1,242 @@
+---
+title: Configuration
+description: Configure your Hytale server for optimal performance
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Configuration
+
+Learn how to customize your Hytale server settings and environment.
+
+## Environment Variables
+
+The Docker container supports these environment variables:
+
+### Core Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SERVER_PORT` | `5520` | Server port (UDP) |
+| `JAVA_OPTS` | `-Xms4G -Xmx8G` | JVM options for memory and GC |
+| `TZ` | `UTC` | Container timezone |
+
+### Update Behavior
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUTO_UPDATE` | `true` | Download server files on startup |
+| `FORCE_UPDATE` | `false` | Re-download even if files exist |
+
+### Authentication
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUTO_AUTH` | `true` | Automatically run device auth flow |
+
+### Performance
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `USE_AOT_CACHE` | `true` | Use AOT cache for faster startup |
+| `DISABLE_SENTRY` | `false` | Disable error reporting |
+| `EXTRA_ARGS` | (empty) | Additional server arguments |
+
+## Docker Compose Configuration
+
+Here's the recommended `docker-compose.yml`:
+
+```yaml
+services:
+  hytale:
+    build: .
+    image: hytale-server:local
+    container_name: hytale-server
+    restart: unless-stopped
+    stdin_open: true  # Required for console access
+    tty: true         # Required for console access
+    ports:
+      - "5520:5520/udp"
+    
+    environment:
+      JAVA_OPTS: "-Xms4G -Xmx8G -XX:+UseG1GC"
+      SERVER_PORT: "5520"
+      AUTO_UPDATE: "true"
+      AUTO_AUTH: "true"
+      FORCE_UPDATE: "false"
+      TZ: "UTC"
+    
+    volumes:
+      - hytale-data:/server
+      - hytale-home:/home/hytale
+      - /etc/machine-id:/etc/machine-id:ro
+    
+    deploy:
+      resources:
+        limits:
+          memory: 10G
+        reservations:
+          memory: 4G
+    
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "HytaleServer.jar"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  hytale-data:
+  hytale-home:
+```
+
+## Volumes
+
+The container uses three volume mounts:
+
+### `hytale-data:/server`
+
+Server files and world data:
+- `Server/` - Server JAR and runtime files
+- `Assets.zip` - Game assets
+- World saves and configuration
+- `.downloader_version` - Tracks hytale-downloader version
+
+### `hytale-home:/home/hytale`
+
+User home directory:
+- Authentication credentials (encrypted)
+- User-specific configuration
+
+### `/etc/machine-id` (Read-only)
+
+Required for encrypted authentication persistence:
+- Provides stable machine identifier
+- Used as encryption key component
+- **Must be mounted read-only**
+
+<Callout type="warn">
+Without `/etc/machine-id`, authentication persistence won't work across restarts.
+</Callout>
+
+## Memory Allocation
+
+Adjust Java heap size based on your needs:
+
+| Players | Recommended RAM | JAVA_OPTS |
+|---------|-----------------|-----------|
+| 1-5     | 2-4 GB | `-Xms2G -Xmx4G` |
+| 5-10    | 4-6 GB | `-Xms4G -Xmx6G` |
+| 10-20   | 6-8 GB | `-Xms6G -Xmx8G` |
+| 20+     | 8+ GB | `-Xms8G -Xmx10G` |
+
+```yaml
+environment:
+  JAVA_OPTS: "-Xms4G -Xmx8G -XX:+UseG1GC"
+```
+
+- `-Xms` - Initial heap size
+- `-Xmx` - Maximum heap size
+- `-XX:+UseG1GC` - Use G1 garbage collector (recommended)
+
+<Callout type="tip">
+Set `-Xms` equal to `-Xmx` to prevent heap resizing during runtime.
+</Callout>
+
+## Console Access
+
+Access the server console to run commands:
+
+```bash
+docker attach hytale-server
+```
+
+Type commands directly (e.g., `/auth status`, `/help`).
+
+<Callout type="info">
+Press `Ctrl+P` then `Ctrl+Q` to detach without stopping the server.
+</Callout>
+
+## Port Configuration
+
+Hytale uses **QUIC over UDP** on port 5520:
+
+```yaml
+ports:
+  - "5520:5520/udp"  # Note: /udp is required!
+```
+
+To use a different external port:
+
+```yaml
+ports:
+  - "25565:5520/udp"  # External:Internal
+```
+
+<Callout type="warn">
+Always keep the internal port as 5520. Only change the external (host) port.
+</Callout>
+
+## AOT Cache
+
+Ahead-of-Time compilation cache improves startup time:
+
+```yaml
+environment:
+  USE_AOT_CACHE: "true"
+```
+
+- First startup: Normal speed (cache is generated)
+- Subsequent startups: Significantly faster
+
+The AOT cache file is stored at `/server/Server/HytaleServer.aot`.
+
+## Forcing Updates
+
+To re-download server files:
+
+```yaml
+environment:
+  FORCE_UPDATE: "true"
+```
+
+Or one-time via command:
+
+```bash
+docker compose down
+FORCE_UPDATE=true docker compose up -d
+```
+
+## Resource Limits
+
+Set container resource limits:
+
+```yaml
+deploy:
+  resources:
+    limits:
+      memory: 10G
+      cpus: '4.0'
+    reservations:
+      memory: 4G
+      cpus: '2.0'
+```
+
+## Health Check
+
+The default health check monitors the Java process:
+
+```yaml
+healthcheck:
+  test: ["CMD", "pgrep", "-f", "HytaleServer.jar"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 120s  # Allow time for download + startup
+```
+
+## Next Steps
+
+- [Set up authentication](/docs/authentication)
+- [Configure network settings](/docs/network-setup)
+- [Review security options](/docs/security)
