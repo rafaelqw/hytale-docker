@@ -24,9 +24,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # =============================================================================
 # Create user and directories
 # =============================================================================
-RUN groupadd -g 1000 hytale 2>/dev/null || true && \
-    useradd -u 1000 -g 1000 -d /home/hytale -m -s /bin/bash hytale 2>/dev/null || true && \
-    mkdir -p /server /home/hytale/.config/hytale/tokens /home/hytale/.cache/hytale && \
+RUN userdel -r ubuntu 2>/dev/null || true && \
+    groupadd -g 1000 hytale && \
+    useradd -u 1000 -g 1000 -d /home/hytale -m -s /bin/bash hytale && \
+    mkdir -p /server/.hytale/tokens && \
     chown -R 1000:1000 /server /home/hytale
 
 # =============================================================================
@@ -72,7 +73,7 @@ ENV JAVA_OPTS="-Xms4G -Xmx8G" \
 # =============================================================================
 EXPOSE 5520/udp
 
-VOLUME ["/server", "/home/hytale"]
+VOLUME ["/server"]
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD pgrep -f "HytaleServer.jar" > /dev/null || exit 1

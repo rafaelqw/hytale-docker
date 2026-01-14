@@ -66,17 +66,15 @@ docker compose logs | grep -i auth
 - Device auth required on every restart
 - Tokens expire or disappear
 
-**Solution - Persist home directory:**
+**Solution - Ensure hytale-data volume is persisted:**
 
-```yaml
-volumes:
-  - hytale-home:/home/hytale  # OAuth tokens stored here
-```
+Tokens are stored in `/server/.hytale/tokens/` which is part of the `hytale-data` volume.
 
 **Check token status:**
 
 ```bash
 docker exec hytale-server hytale-auth status
+docker exec hytale-server ls -la /server/.hytale/tokens/
 ```
 
 ### Device Code Expires
@@ -261,12 +259,11 @@ docker compose up -d
 
 ### Data Lost After Restart
 
-**Ensure volumes are defined:**
+**Ensure volume is defined:**
 
 ```yaml
 volumes:
   hytale-data:
-  hytale-home:
 ```
 
 **Check volume exists:**

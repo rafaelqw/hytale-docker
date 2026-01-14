@@ -20,7 +20,7 @@ readonly SESSION_REFRESH_URL="https://sessions.hytale.com/game-session/refresh"
 readonly SESSION_DELETE_URL="https://sessions.hytale.com/game-session"
 
 # Token storage paths
-readonly TOKEN_DIR="${HOME}/.config/hytale/tokens"
+readonly TOKEN_DIR="/server/.hytale/tokens"
 readonly OAUTH_TOKEN_FILE="${TOKEN_DIR}/oauth_tokens.json"
 readonly SESSION_TOKEN_FILE="${TOKEN_DIR}/session_tokens.json"
 readonly PROFILE_CACHE_FILE="${TOKEN_DIR}/profiles.json"

@@ -62,7 +62,7 @@ On restart, the container:
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  1. Load existing tokens (if any)                                           │
-│     └─► ~/.config/hytale/tokens/                                            │
+│     └─► /server/.hytale/tokens/                                             │
 │                                                                             │
 │  2. If no tokens OR expired → Device Code Flow                              │
 │     ├─► POST /oauth2/device/auth                                            │
@@ -157,18 +157,18 @@ Your profile selection is saved and persists across restarts.
 
 ## Token Storage
 
-Tokens are stored in the container at:
+Tokens are stored in the `/server/.hytale/tokens/` directory (persisted in the `hytale-data` volume):
 
 | File | Purpose |
-|------|---------|
-| `~/.config/hytale/tokens/oauth_tokens.json` | OAuth access & refresh tokens |
-| `~/.config/hytale/tokens/session_tokens.json` | Game session tokens |
-| `~/.config/hytale/tokens/profiles.json` | Cached user profiles |
-| `~/.config/hytale/tokens/selected_profile.json` | Currently selected profile |
+|------|---------||
+| `/server/.hytale/tokens/oauth_tokens.json` | OAuth access & refresh tokens |
+| `/server/.hytale/tokens/session_tokens.json` | Game session tokens |
+| `/server/.hytale/tokens/profiles.json` | Cached user profiles |
+| `/server/.hytale/tokens/selected_profile.json` | Currently selected profile |
 | `/server/.cache/.hytale-downloader-credentials.json` | Credentials for downloader |
 
 <Callout type="info">
-Persist the `hytale-home` volume to keep tokens across container restarts.
+Tokens are automatically persisted in the `hytale-data` volume across container restarts.
 </Callout>
 
 ## Authentication CLI
@@ -223,10 +223,10 @@ docker exec -it hytale-server cat /server/.cache/.hytale-downloader-credentials.
 
 ### Tokens keep expiring
 
-Ensure the `hytale-home` volume is persisted:
-```yaml
-volumes:
-  - hytale-home:/home/hytale
+Tokens are stored in `/server/.hytale/tokens/` and automatically persisted in the `hytale-data` volume. If tokens are not persisting, check:
+
+```bash
+docker exec hytale-server ls -la /server/.hytale/tokens/
 ```
 
 ### Need to re-authenticate

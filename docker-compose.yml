@@ -16,7 +16,6 @@ services:
     
     volumes:
       - hytale-data:/server
-      - hytale-home:/home/hytale
       - /etc/machine-id:/etc/machine-id:ro
     
     deploy:
@@ -35,4 +34,3 @@ services:
 
 volumes:
   hytale-data:
-  hytale-home:
