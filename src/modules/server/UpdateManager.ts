@@ -183,7 +183,7 @@ export class UpdateManager {
       const arrayBuffer = await response.arrayBuffer();
       await writeFile(zipPath, Buffer.from(arrayBuffer));
 
-      // Extract to check version
+      // Extract to check version (in temp dir, safe to overwrite)
       const proc = Bun.spawn(["unzip", "-oq", zipPath, "-d", tempDir]);
       await proc.exited;
 
@@ -270,7 +270,7 @@ export class UpdateManager {
       const arrayBuffer = await response.arrayBuffer();
       await writeFile(zipPath, Buffer.from(arrayBuffer));
 
-      // Extract
+      // Extract (in temp dir, safe to overwrite)
       const extractProc = Bun.spawn(["unzip", "-oq", zipPath, "-d", tempDir]);
       if ((await extractProc.exited) !== 0) {
         throw new Error("Failed to extract downloader");

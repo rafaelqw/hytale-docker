@@ -126,7 +126,26 @@ export class DownloadManager {
   }
 
   private async extract(zipPath: string, destDir: string): Promise<void> {
-    const proc = Bun.spawn(["unzip", "-oq", zipPath, "-d", destDir]);
+    // Build exclusion list for existing config files (preserve user settings on updates)
+    const configFiles = [
+      "Server/config.json",
+      "Server/whitelist.json",
+      "Server/ops.json",
+      "Server/banned-players.json",
+      "Server/banned-ips.json",
+    ];
+
+    const exclusions: string[] = [];
+    for (const file of configFiles) {
+      const fullPath = join(destDir, file);
+      if (existsSync(fullPath)) {
+        exclusions.push("-x", file);
+      }
+    }
+
+    // Extract with -o (overwrite) but exclude existing config files
+    const args = ["unzip", "-oq", zipPath, "-d", destDir, ...exclusions];
+    const proc = Bun.spawn(args);
     if ((await proc.exited) !== 0) throw new Error("Extraction failed");
   }
 
