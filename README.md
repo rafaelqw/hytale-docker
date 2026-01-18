@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Docs-hytale.romarin.dev-blue)](https://hytale.romarin.dev)
 
-*Automated authentication • Auto-updates • Secure by default*
+*Automated authentication • Auto-updates • CurseForge mods • Secure by default*
 
 </div>
 
@@ -19,35 +19,90 @@
 
 ## ✨ Features
 
-- 🚀 **One-command startup** — Just `docker compose up`, authenticate once, play forever
-- 🔐 **OAuth2 Authentication** — Single device code flow for both downloader and server
-- 🔄 **Auto-refresh tokens** — Background daemon keeps tokens valid (30-day refresh tokens)
-- 📦 **Auto-updates** — Downloads and updates server files automatically
-- 🔒 **Secure by default** — Non-root user, dropped capabilities, hardened container
-- ⚡ **Fast boot** — AOT cache support for quicker server startup
-- 💾 **Persistent data** — Worlds, tokens, and logs survive container restarts
+| Feature | Description |
+|---------|-------------|
+| 🚀 **One-command startup** | Just `docker compose up`, authenticate once, play forever |
+| 🔐 **OAuth2 Authentication** | Device code flow with 30-day persistent tokens |
+| 🔄 **Auto-updates** | Optional automatic server updates on restart |
+| 🧩 **CurseForge Mods** | Auto-sync mods with `CF_MODS` environment variable |
+| 💻 **Unified CLI** | Single `hytale` command for auth, updates, mods, and server commands |
+| 🔒 **Secure by default** | Non-root user, dropped capabilities, hardened container |
+| ⚡ **Fast boot** | AOT cache support for quicker server startup |
+| 💾 **Persistent data** | Worlds, tokens, and mods survive restarts |
 
 ---
 
 ## 🚀 Quick Start
 
+Create a `docker-compose.yml`:
+
+```yaml
+services:
+  hytale:
+    image: rxmarin/hytale-docker:latest
+    container_name: hytale-server
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    ports:
+      - "5520:5520/udp"
+    environment:
+      JAVA_OPTS: "-Xms4G -Xmx8G"
+      AUTO_UPDATE: "true"
+    volumes:
+      - hytale-data:/server
+
+volumes:
+  hytale-data:
+```
+
+Start the server:
+
 ```bash
-# Clone the repository
-git clone https://github.com/romariin/hytale-docker.git
-cd hytale-docker/examples
-
-# Start the server
 docker compose up -d
-
-# Watch for authentication prompt
-docker compose logs -f
+docker compose logs -f  # Watch for auth prompt
 ```
 
 On first run, you'll see a device authorization prompt. Visit the URL, enter the code, and authorize. The server starts automatically.
 
-Connect to your server at `your-ip:5520` using the Hytale client.
+Connect to `your-ip:5520` using the Hytale client.
 
 > **Note:** Hytale uses **QUIC over UDP** (not TCP). Forward UDP port 5520 on your firewall.
+
+---
+
+## 💻 CLI Usage
+
+```bash
+# Auth
+docker exec -it hytale-server hytale auth status
+docker exec -it hytale-server hytale auth login
+
+# Server commands
+docker exec -it hytale-server hytale cmd /help
+docker exec -it hytale-server hytale cmd /list
+
+# Updates
+docker exec -it hytale-server hytale update check
+docker exec -it hytale-server hytale update schedule
+
+# CurseForge mods
+docker exec -it hytale-server hytale mods list
+```
+
+---
+
+## 🧩 CurseForge Mods
+
+Auto-sync mods from CurseForge:
+
+```yaml
+environment:
+  CF_API_KEY: "${CF_API_KEY}"  # From .env file
+  CF_MODS: "123456,789012"
+```
+
+See [CurseForge documentation](https://hytale.romarin.dev/docs/curseforge) for setup.
 
 ---
 
@@ -55,13 +110,27 @@ Connect to your server at `your-ip:5520` using the Hytale client.
 
 📚 **[hytale.romarin.dev](https://hytale.romarin.dev)** — Full documentation
 
-Topics covered:
-- [Quick Start Guide](https://hytale.romarin.dev/docs/quick-start)
+- [Quick Start](https://hytale.romarin.dev/docs/quick-start)
 - [Configuration](https://hytale.romarin.dev/docs/configuration)
+- [CLI Reference](https://hytale.romarin.dev/docs/cli)
+- [CurseForge Mods](https://hytale.romarin.dev/docs/curseforge)
 - [Authentication](https://hytale.romarin.dev/docs/authentication)
-- [Network Setup](https://hytale.romarin.dev/docs/network-setup)
-- [Security](https://hytale.romarin.dev/docs/security)
 - [Troubleshooting](https://hytale.romarin.dev/docs/troubleshooting)
+
+---
+
+## ⚙️ Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JAVA_OPTS` | `-Xms4G -Xmx8G` | JVM memory options |
+| `AUTO_UPDATE` | `false` | Auto-update server on restart |
+| `PATCHLINE` | `release` | Release channel |
+| `USE_AOT_CACHE` | `true` | Faster startup |
+| `CF_API_KEY` | — | CurseForge API key |
+| `CF_MODS` | — | Comma-separated mod IDs |
+
+See [Configuration](https://hytale.romarin.dev/docs/configuration) for all options.
 
 ---
 
@@ -71,72 +140,11 @@ Topics covered:
 # Build the image locally
 docker build -t hytale-server:latest .
 
-# Run locally with Bun (requires Bun installed)
+# Run locally with Bun
 bun run src/main.ts
 
-# Run the documentation site
-cd docs
-npm install
-npm run dev
-```
-
----
-
-## 🧩 Runtime Architecture (Bun + TypeScript)
-
-The runtime has been migrated from Bash to Bun + TypeScript for better maintainability and type safety.
-
-### Project Structure
-
-```
-src/
-├── main.ts              # Entrypoint (replaces scripts/entrypoint.sh)
-├── hytale-auth.ts       # Auth CLI entrypoint
-├── hytale-cmd.ts        # Command CLI entrypoint
-├── types/               # Type definitions
-│   ├── Config.ts        # Configuration types
-│   ├── OAuth.ts         # OAuth token types
-│   ├── Sessions.ts      # Session token types
-│   ├── Profiles.ts      # Profile types
-│   ├── Download.ts      # Downloader types
-│   ├── Server.ts        # Server launch types
-│   └── Logging.ts       # Logger interface
-└── modules/             # Runtime modules
-    ├── Config.ts        # Environment configuration
-    ├── Logger.ts        # Colored console output
-    ├── TokenStore.ts    # Token persistence
-    ├── OAuthClient.ts   # RFC 8628 Device Code Flow
-    ├── ProfileManager.ts# Profile selection
-    ├── SessionManager.ts# Game session lifecycle
-    ├── AuthMonitor.ts   # Background token refresh
-    ├── AuthService.ts   # High-level auth operations
-    ├── AuthCli.ts       # CLI commands
-    ├── VersionService.ts# Update detection
-    ├── DownloadManager.ts# Server download/extraction
-    ├── ServerProcess.ts # Server launch & I/O
-    ├── Preflight.ts     # System checks
-    └── CommandClient.ts # FIFO command sender
-```
-
-### Key Changes from Bash
-
-| Bash | Bun + TypeScript |
-|------|------------------|
-| `curl` | `fetch()` API |
-| `jq` | Native JSON parsing |
-| Shell scripts | Typed modules |
-| `source` includes | ES module imports |
-
-### CLI Usage
-
-```bash
-# Inside container
-hytale-auth login           # Device code auth
-hytale-auth profile list    # List profiles
-hytale-auth profile select 1# Select profile
-hytale-auth session         # Create session
-hytale-auth status          # Token status
-hytale-cmd /help            # Send server command
+# Run documentation site
+cd docs && pnpm install && pnpm dev
 ```
 
 ---
@@ -153,6 +161,7 @@ hytale-cmd /help            # Send server command
 **Made with ❤️ by [romarin.dev](https://romarin.dev)**
 
 [Documentation](https://hytale.romarin.dev) •
+[Discord Support](https://discord.gg/FewwuUFqbw) •
 [Report Bug](https://github.com/rxmarin/hytale-docker/issues) •
 [Request Feature](https://github.com/rxmarin/hytale-docker/issues)
 
