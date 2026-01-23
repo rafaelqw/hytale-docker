@@ -50,12 +50,12 @@ export function Hero() {
           className="flex gap-4 items-center mt-2"
         >
           <Link href="/docs">
-            <Button size="lg" className="rounded-md text-base h-11 px-8 gap-2 shadow-lg">
+            <Button>
               Get Started <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
           <Link href="https://github.com/romariin/hytale-docker">
-            <Button variant="outline" size="lg" className="rounded-md text-base h-11 px-8 gap-2 shadow-sm bg-background/50 backdrop-blur-sm">
+            <Button variant="outline">
               <Github className="w-4 h-4" /> GitHub
               {stars !== null && (
                 <span className="flex items-center gap-1 ml-1 text-sm">
