@@ -152,10 +152,10 @@ export function Configurator() {
 			lines.push(`      - ${config.volumeName}:/server`);
 		}
 
-		// Custom bind mounts
 		for (const mount of config.customMounts) {
 			const suffix = mount.readOnly ? ':ro' : '';
-			lines.push(`      - ${mount.hostPath}:${mount.containerPath}${suffix}`);
+			const source = mount.type === 'volume' ? mount.volumeName : mount.hostPath;
+			lines.push(`      - ${source}:${mount.containerPath}${suffix}`);
 		}
 
 		lines.push('      - /etc/machine-id:/etc/machine-id:ro');
@@ -177,13 +177,21 @@ export function Configurator() {
 			'      start_period: 120s',
 		);
 
-		// Only add volumes section for named volumes
-		if (config.volumeType === 'volume') {
-			lines.push(
-				'',
-				'volumes:',
-				`  ${config.volumeName}:`,
-			);
+		// Add volumes section for named volumes (both main and custom)
+		const customVolumeNames = config.customMounts
+			.filter(m => m.type === 'volume' && m.volumeName)
+			.map(m => m.volumeName);
+
+		const hasVolumes = config.volumeType === 'volume' || customVolumeNames.length > 0;
+
+		if (hasVolumes) {
+			lines.push('', 'volumes:');
+			if (config.volumeType === 'volume') {
+				lines.push(`  ${config.volumeName}:`);
+			}
+			for (const volumeName of customVolumeNames) {
+				lines.push(`  ${volumeName}:`);
+			}
 		}
 
 		return lines.join('\n');

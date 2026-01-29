@@ -13,6 +13,16 @@ function parseNumber(value: string | undefined, fallback: number): number {
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
+function hasEnv(env: RuntimeEnv, key: keyof RuntimeEnv): boolean {
+  return Object.prototype.hasOwnProperty.call(env, key);
+}
+
+function parseOptionalNumber(value: string | undefined): number | undefined {
+  if (value === undefined || value === "") return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
+
 /**
  * Runtime configuration from environment variables
  */
@@ -28,6 +38,15 @@ export class Config {
   readonly autoRefreshTokens: boolean;
   readonly autoSelectProfile: boolean;
   readonly extraArgs: string;
+  readonly serverConfigOverrides: {
+    serverName: { set: boolean; value?: string };
+    motd: { set: boolean; value?: string };
+    password: { set: boolean; value?: string };
+    maxPlayers: { set: boolean; value?: number };
+    maxViewRadius: { set: boolean; value?: number };
+    defaultWorld: { set: boolean; value?: string };
+    defaultGameMode: { set: boolean; value?: string };
+  };
   // CurseForge mod support
   readonly cfApiKey: string | null;
   readonly cfMods: string;
@@ -65,6 +84,36 @@ export class Config {
     this.autoRefreshTokens = parseBool(env.AUTO_REFRESH_TOKENS, true);
     this.autoSelectProfile = parseBool(env.AUTOSELECT_GAME_PROFILE, true);
     this.extraArgs = env.EXTRA_ARGS ?? "";
+    this.serverConfigOverrides = {
+      serverName: {
+        set: hasEnv(env, "SERVER_NAME"),
+        value: env.SERVER_NAME ?? "",
+      },
+      motd: {
+        set: hasEnv(env, "MOTD"),
+        value: env.MOTD ?? "",
+      },
+      password: {
+        set: hasEnv(env, "PASSWORD"),
+        value: env.PASSWORD ?? "",
+      },
+      maxPlayers: {
+        set: hasEnv(env, "MAX_PLAYERS"),
+        value: parseOptionalNumber(env.MAX_PLAYERS),
+      },
+      maxViewRadius: {
+        set: hasEnv(env, "MAX_VIEW_RADIUS"),
+        value: parseOptionalNumber(env.MAX_VIEW_RADIUS),
+      },
+      defaultWorld: {
+        set: hasEnv(env, "DEFAULT_WORLD"),
+        value: env.DEFAULT_WORLD ?? "",
+      },
+      defaultGameMode: {
+        set: hasEnv(env, "DEFAULT_GAME_MODE"),
+        value: env.DEFAULT_GAME_MODE ?? "",
+      },
+    };
     // CurseForge mod support
     this.cfApiKey = env.CF_API_KEY ?? null;
     this.cfMods = env.CF_MODS ?? "";

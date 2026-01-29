@@ -81,9 +81,11 @@ export interface SelectedMod {
 	versionType: 'latest' | 'specific';
 }
 
-export interface BindMount {
+export interface Mount {
 	id: string;
-	hostPath: string;
+	type: 'volume' | 'bind';
+	hostPath?: string;
+	volumeName?: string;
 	containerPath: string;
 	readOnly?: boolean;
 }
@@ -104,7 +106,7 @@ export interface ConfigState {
 	volumeType: 'volume' | 'bind';
 	volumeName: string;
 	bindPath: string;
-	customMounts: BindMount[];
+	customMounts: Mount[];
 	// Server config.json options
 	serverName: string;
 	motd: string;
@@ -112,7 +114,7 @@ export interface ConfigState {
 	maxPlayers: number;
 	maxViewRadius: number;
 	defaultWorld: string;
-	defaultGameMode: 'Adventure' | 'Creative' | 'Survival';
+	defaultGameMode: 'Adventure' | 'Creative';
 }
 
 // Common mount presets for quick adding

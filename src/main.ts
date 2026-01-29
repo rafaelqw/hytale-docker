@@ -14,6 +14,7 @@ import {
   UpdateManager,
   VersionService,
   ServerProcess,
+  applyServerConfigOverrides,
 } from "./modules";
 
 const PENDING_UPDATE_FILE = "/server/.pending_update";
@@ -83,6 +84,8 @@ async function main(): Promise<void> {
   } else {
     logger.success("Server files up to date");
   }
+
+  await applyServerConfigOverrides(logger, config, config.paths);
 
   // Sync mods from configured providers
   const modManager = new ModManager(logger);
