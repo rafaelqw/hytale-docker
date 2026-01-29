@@ -32,6 +32,15 @@
 
 ---
 
+## 🆕 Meet the New Configurator
+
+Generate a complete docker-compose.yml in minutes with the interactive configurator.  
+Available at https://hytale.romarin.dev
+
+![Configurator preview](docs/public/configurator.png)
+
+---
+
 ## 🚀 Quick Start
 
 Create a `docker-compose.yml`:
