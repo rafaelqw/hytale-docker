@@ -86,7 +86,10 @@ export class UpdateManager {
     console.log("");
   }
 
-  private async checkDownloaderUpdate(): Promise<UpdateCheckResult> {
+  /**
+   * Check for downloader updates
+   */
+  async checkDownloaderUpdate(): Promise<UpdateCheckResult> {
     const currentVersion = await this.getDownloaderVersion();
     const latestVersion = await this.fetchLatestDownloaderVersion();
 
@@ -115,7 +118,10 @@ export class UpdateManager {
     };
   }
 
-  private async checkServerUpdate(): Promise<UpdateCheckResult> {
+  /**
+   * Check for server updates
+   */
+  async checkServerUpdate(): Promise<UpdateCheckResult> {
     const current = await this.versionService.load();
     const latestVersion = await this.fetchLatestServerVersion();
 
@@ -177,7 +183,7 @@ export class UpdateManager {
       const arrayBuffer = await response.arrayBuffer();
       await writeFile(zipPath, Buffer.from(arrayBuffer));
 
-      // Extract to check version
+      // Extract to check version (in temp dir, safe to overwrite)
       const proc = Bun.spawn(["unzip", "-oq", zipPath, "-d", tempDir]);
       await proc.exited;
 
@@ -230,8 +236,18 @@ export class UpdateManager {
       const output = await new Response(proc.stdout).text();
       clearTimeout(timeout);
 
-      const match = output.match(/version\s+([^\)\s]+)/i);
-      return match?.[1] ?? null;
+      // The -print-version flag outputs the version directly (e.g., "2026.01.17-4b0f30090")
+      // Find a line that matches the version format: YYYY.MM.DD-hash
+      const lines = output.split("\n");
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Match version format: 2026.01.17-4b0f30090
+        if (/^\d{4}\.\d{2}\.\d{2}-[a-f0-9]+$/.test(trimmed)) {
+          return trimmed;
+        }
+      }
+
+      return null;
     } catch {
       return null;
     }
@@ -254,7 +270,7 @@ export class UpdateManager {
       const arrayBuffer = await response.arrayBuffer();
       await writeFile(zipPath, Buffer.from(arrayBuffer));
 
-      // Extract
+      // Extract (in temp dir, safe to overwrite)
       const extractProc = Bun.spawn(["unzip", "-oq", zipPath, "-d", tempDir]);
       if ((await extractProc.exited) !== 0) {
         throw new Error("Failed to extract downloader");

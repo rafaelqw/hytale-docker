@@ -1,0 +1,227 @@
+---
+title: CLI Reference
+description: Unified command-line interface for Hytale Docker
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# CLI Reference
+
+Hytale Docker provides a unified `hytale` CLI for authentication, server commands, updates, and mods.
+
+```bash
+docker exec -it hytale-server hytale <command> [subcommand] [options]
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `hytale auth` | Authentication management |
+| `hytale cmd` | Send commands to running server |
+| `hytale update` | Check and manage updates |
+| `hytale mods` | CurseForge mod management |
+| `hytale help` | Show help |
+
+---
+
+## auth — Authentication
+
+Manage OAuth tokens, sessions, and profiles.
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `auth login` | Start device code authentication |
+| `auth refresh` | Refresh OAuth and session tokens |
+| `auth session` | Create a new game session |
+| `auth profile list` | List available profiles |
+| `auth profile select <n>` | Select profile by number or UUID |
+| `auth status` | Show current token status |
+| `auth export` | Export tokens as environment variables |
+| `auth logout` | Clear all stored tokens |
+
+### Examples
+
+```bash
+# Check token status
+docker exec -it hytale-server hytale auth status
+
+# Re-authenticate
+docker exec -it hytale-server hytale auth login
+
+# List profiles
+docker exec -it hytale-server hytale auth profile list
+
+# Select profile #1
+docker exec -it hytale-server hytale auth profile select 1
+
+# Export tokens as JSON
+docker exec -it hytale-server hytale auth export --json
+
+# Clear all tokens
+docker exec -it hytale-server hytale auth logout
+```
+
+### Status Output
+
+```
+Token Status:
+─────────────────────────────────────────
+OAuth:
+  Access Token: Valid (expires in 55 min)
+  Refresh Token: Valid (expires in 29 days)
+
+Session:
+  Session Token: Valid (expires in 58 min)
+  Identity Token: Valid
+
+Profile:
+  Selected: PlayerName (uuid-here)
+─────────────────────────────────────────
+```
+
+---
+
+## cmd — Server Commands
+
+Send commands to the running Hytale server.
+
+```bash
+docker exec -it hytale-server hytale cmd <command>
+```
+
+### Examples
+
+```bash
+# Show available commands
+docker exec -it hytale-server hytale cmd /help
+
+# List online players
+docker exec -it hytale-server hytale cmd /list
+
+# Stop the server gracefully
+docker exec -it hytale-server hytale cmd /stop
+```
+
+<Callout type="info">
+The server must be running. If you get "Server not running", check `docker compose ps`.
+</Callout>
+
+---
+
+## update — Update Management
+
+Check for updates and schedule updates for restart.
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `update check` | Check if updates are available |
+| `update schedule` | Schedule update for next restart |
+| `update cancel` | Cancel scheduled update |
+| `update status` | Check if an update is scheduled |
+
+### Examples
+
+```bash
+# Check for updates
+docker exec -it hytale-server hytale update check
+
+# Check with JSON output
+docker exec -it hytale-server hytale update check --json
+
+# Schedule an update (for AUTO_UPDATE=false)
+docker exec -it hytale-server hytale update schedule
+
+# Check schedule status
+docker exec -it hytale-server hytale update status
+
+# Cancel scheduled update
+docker exec -it hytale-server hytale update cancel
+```
+
+### Check Output
+
+```
+Update Status:
+──────────────────────────────────────────────────
+✅ Downloader: v1.2.3 (up to date)
+⚠️  Server: 2026.01.15-abc123 → 2026.01.18-def456
+──────────────────────────────────────────────────
+
+Run 'hytale update schedule' to schedule the update
+Or set AUTO_UPDATE=true to enable automatic updates
+```
+
+<Callout type="info">
+With `AUTO_UPDATE=true`, updates apply automatically on restart. The `schedule` command is for manual updates when `AUTO_UPDATE=false`.
+</Callout>
+
+---
+
+## mods — CurseForge Mods
+
+Manage CurseForge mods installed on the server.
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `mods list` | List installed CurseForge mods |
+| `mods update <projectId>` | Force update a specific mod |
+
+### Examples
+
+```bash
+# List installed mods
+docker exec -it hytale-server hytale mods list
+
+# Force update a specific mod
+docker exec -it hytale-server hytale mods update 123456
+```
+
+<Callout type="warn">
+Requires `CF_API_KEY` environment variable. See [CurseForge Mods](/docs/curseforge).
+</Callout>
+
+---
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `-h, --help` | Show help for command |
+| `--json` | Output JSON (where supported) |
+
+---
+
+## Quick Reference
+
+```bash
+# Auth
+hytale auth status
+hytale auth login
+hytale auth profile list
+hytale auth profile select 1
+
+# Server Commands
+hytale cmd /help
+hytale cmd /list
+
+# Updates
+hytale update check
+hytale update schedule
+
+# Mods
+hytale mods list
+hytale mods update 123456
+```
+
+## Next Steps
+
+- [CurseForge Mods](/docs/curseforge) — Auto-sync mods
+- [Configuration](/docs/configuration) — Environment variables
+- [Troubleshooting](/docs/troubleshooting) — Common issues
