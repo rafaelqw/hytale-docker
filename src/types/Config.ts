@@ -14,9 +14,20 @@ export interface RuntimeEnv {
   EXTRA_ARGS?: string;
   TZ?: string;
   HYTALE_TOKEN_DIR?: string;
+  // Server config.json overrides
+  SERVER_NAME?: string;
+  MOTD?: string;
+  PASSWORD?: string;
+  MAX_PLAYERS?: string;
+  MAX_VIEW_RADIUS?: string;
+  DEFAULT_WORLD?: string;
+  DEFAULT_GAME_MODE?: string;
   // CurseForge mod support
   CF_API_KEY?: string;
   CF_MODS?: string;
+  // Modtale mod support
+  MT_API_KEY?: string;
+  MT_MODS?: string;
 }
 
 /**

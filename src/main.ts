@@ -7,11 +7,14 @@ import {
   ProfileManager,
   SessionManager,
   AuthService,
-  CurseForgeManager,
+  ModManager,
+  parseCurseForgeConfig,
+  parseModtaleConfig,
   DownloadManager,
   UpdateManager,
   VersionService,
   ServerProcess,
+  applyServerConfigOverrides,
 } from "./modules";
 
 const PENDING_UPDATE_FILE = "/server/.pending_update";
@@ -82,11 +85,21 @@ async function main(): Promise<void> {
     logger.success("Server files up to date");
   }
 
-  // Sync CurseForge mods if configured
+  await applyServerConfigOverrides(logger, config, config.paths);
+
+  // Sync mods from configured providers
+  const modManager = new ModManager(logger);
+
   if (config.cfApiKey && config.cfMods) {
-    const cfManager = new CurseForgeManager(logger, config.cfApiKey);
-    const modEntries = CurseForgeManager.parseModsConfig(config.cfMods);
-    await cfManager.syncMods(modEntries);
+    modManager.registerProvider("curseforge", config.cfApiKey);
+    const cfEntries = parseCurseForgeConfig(config.cfMods);
+    await modManager.syncAllMods(cfEntries);
+  }
+
+  if (config.mtApiKey && config.mtMods) {
+    modManager.registerProvider("modtale", config.mtApiKey);
+    const mtEntries = parseModtaleConfig(config.mtMods);
+    await modManager.syncAllMods(mtEntries);
   }
 
   // Session - Always create fresh session on startup to avoid stale tokens
