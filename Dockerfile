@@ -18,17 +18,11 @@ FROM alpine:3.20 AS downloader
 
 ARG TARGETARCH
 RUN apk add --no-cache curl unzip ca-certificates
-RUN curl -fsSL --retry 3 --retry-delay 2 https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip
-RUN unzip /tmp/dl.zip -d /tmp
-RUN find /tmp -type f -name "*hytale*" -o -name "*downloader*"
-RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
-    FILE=$(find /tmp -type f -name "*downloader*linux*$ARCH*" -o -name "*downloader*$ARCH*" | head -1) && \
-    if [ -z "$FILE" ]; then \
-        echo "ERROR: Could not find downloader for arch $ARCH" && \
-        find /tmp -type f && \
-        exit 1; \
-    fi && \
-    mv "$FILE" /hytale-downloader && \
+RUN curl -fsSL --retry 3 --retry-delay 2 https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
+    unzip /tmp/dl.zip -d /tmp && \
+    ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
+    cp /tmp/hytale-downloader-linux-$ARCH /hytale-downloader 2>/dev/null || \
+    cp /tmp/hytale-downloader-linux-amd64 /hytale-downloader && \
     chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
