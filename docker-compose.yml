@@ -1,7 +1,12 @@
 services:
   hytale:
-    image: rxmarin/hytale-docker:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
     container_name: hytale-server
+    platform: linux/arm64
     restart: unless-stopped
     stdin_open: true
     tty: true
