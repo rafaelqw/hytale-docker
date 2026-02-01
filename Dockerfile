@@ -28,7 +28,7 @@ RUN curl -fsSL --retry 3 --retry-delay 2 https://downloader.hytale.com/hytale-do
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:25-jre-alpine
 
-RUN apk add --no-cache tini libstdc++ gcompat unzip && \
+RUN apk add --no-cache tini libstdc++ gcompat unzip libc6-compat && \
     adduser -D -u 1000 -h /server hytale
 
 COPY --from=build /app/hytale-server /app/hytale /usr/local/bin/
