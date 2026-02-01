@@ -19,8 +19,11 @@ FROM alpine:3.20 AS downloader
 ARG TARGETARCH
 RUN apk add --no-cache curl unzip ca-certificates
 RUN curl -fsSL --retry 3 --retry-delay 2 https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip
-RUN unzip -q /tmp/dl.zip -d /tmp && ls -la /tmp/
+RUN unzip -l /tmp/dl.zip
+RUN unzip /tmp/dl.zip -d /tmp
+RUN ls -la /tmp/ && echo "TARGETARCH=$TARGETARCH"
 RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
+    echo "Using ARCH=$ARCH" && \
     mv /tmp/hytale-downloader-linux-$ARCH /hytale-downloader && \
     chmod +x /hytale-downloader
 
