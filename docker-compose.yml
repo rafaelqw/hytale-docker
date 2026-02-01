@@ -25,6 +25,7 @@ services:
     
     volumes:
       - hytale-data:/server
+      - /home/ubuntu/arquivos/hytale/extracted:/server-init:ro
       - /etc/machine-id:/etc/machine-id:ro
     
     deploy:

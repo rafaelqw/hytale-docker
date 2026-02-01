@@ -13,14 +13,6 @@ RUN BUN_TARGET=$([ "$TARGETARCH" = "arm64" ] && echo "bun-linux-arm64" || echo "
     bun build src/main.ts --compile --target=$BUN_TARGET --outfile=hytale-server && \
     bun build src/hytale.ts --compile --target=$BUN_TARGET --outfile=hytale
 
-# ── Copy server files ────────────────────────────────────────────────────────
-FROM alpine:3.20 AS files
-
-ARG TARGETARCH
-COPY 2026.01.28-87d03be09.zip /tmp/server-files.zip
-RUN apk add --no-cache unzip && \
-    unzip -q /tmp/server-files.zip -d /server-files
-
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:25-jre-alpine
 
@@ -28,7 +20,6 @@ RUN apk add --no-cache tini libstdc++ gcompat unzip && \
     adduser -D -u 1000 -h /server hytale
 
 COPY --from=build /app/hytale-server /app/hytale /usr/local/bin/
-COPY --from=files /server-files /server/
 RUN chmod +x /usr/local/bin/hytale-server /usr/local/bin/hytale
 
 RUN mkdir -p /server/.hytale/tokens && chown -R hytale:hytale /server
@@ -53,6 +44,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
-CMD ["hytale-server"]
+CMD ["sh", "-c", "if [ -d /server-init ] && [ ! -f /server/.initialized ]; then cp -r /server-init/* /server/ && touch /server/.initialized; fi && exec hytale-server"]
 
 STOPSIGNAL SIGTERM
