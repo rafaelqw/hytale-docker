@@ -17,20 +17,17 @@ RUN BUN_TARGET=$([ "$TARGETARCH" = "arm64" ] && echo "bun-linux-arm64" || echo "
 FROM alpine:3.20 AS downloader
 
 ARG TARGETARCH
-RUN apk add --no-cache curl unzip ca-certificates file
-RUN curl -fsSL --retry 3 --retry-delay 2 https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
-    unzip /tmp/dl.zip -d /tmp && \
-    ls -lah /tmp/hytale-downloader-* && \
+RUN apk add --no-cache curl unzip && \
+    curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
+    unzip -q /tmp/dl.zip -d /tmp && \
     ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
-    echo "Building for TARGETARCH=$TARGETARCH, using ARCH=$ARCH" && \
-    cp /tmp/hytale-downloader-linux-$ARCH /hytale-downloader && \
-    file /hytale-downloader && \
+    mv /tmp/hytale-downloader-linux-$ARCH /hytale-downloader && \
     chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:25-jre-alpine
 
-RUN apk add --no-cache tini libstdc++ gcompat unzip libc6-compat && \
+RUN apk add --no-cache tini libstdc++ gcompat unzip && \
     adduser -D -u 1000 -h /server hytale
 
 COPY --from=build /app/hytale-server /app/hytale /usr/local/bin/
