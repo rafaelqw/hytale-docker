@@ -20,6 +20,7 @@ ARG TARGETARCH
 RUN apk add --no-cache curl unzip && \
     curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
     unzip -q /tmp/dl.zip -d /tmp && \
+    ls -la /tmp/ && \
     if [ "$TARGETARCH" = "arm64" ]; then \
         mv /tmp/hytale-downloader-linux-arm64 /hytale-downloader; \
     else \
