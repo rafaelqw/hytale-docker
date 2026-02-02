@@ -6,7 +6,6 @@ services:
       platforms:
         - linux/arm64
     container_name: hytale-server
-    platform: linux/arm64
     restart: unless-stopped
     stdin_open: true
     tty: true
@@ -25,7 +24,6 @@ services:
     
     volumes:
       - hytale-data:/server
-      - /home/ubuntu/arquivos/hytale/extracted:/server-init:ro
       - /etc/machine-id:/etc/machine-id:ro
     
     deploy:

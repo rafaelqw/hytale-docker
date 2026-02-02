@@ -43,7 +43,6 @@ __tests__/
 *.tar
 *.tar.gz
 *.zip
-!2026.01.28-87d03be09.zip
 
 # Docker files (don't include in build context)
 docker-compose*.yml

@@ -13,6 +13,17 @@ RUN BUN_TARGET=$([ "$TARGETARCH" = "arm64" ] && echo "bun-linux-arm64" || echo "
     bun build src/main.ts --compile --target=$BUN_TARGET --outfile=hytale-server && \
     bun build src/hytale.ts --compile --target=$BUN_TARGET --outfile=hytale
 
+# ── Fetch downloader ─────────────────────────────────────────────────────────
+FROM --platform=linux/amd64 alpine:3.20 AS downloader
+
+ARG TARGETARCH
+RUN apk add --no-cache curl unzip && \
+    curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
+    unzip -q /tmp/dl.zip -d /tmp && \
+    ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
+    mv /tmp/hytale-downloader-linux-$ARCH /hytale-downloader && \
+    chmod +x /hytale-downloader
+
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:25-jre-alpine
 
@@ -20,7 +31,8 @@ RUN apk add --no-cache tini libstdc++ gcompat unzip && \
     adduser -D -u 1000 -h /server hytale
 
 COPY --from=build /app/hytale-server /app/hytale /usr/local/bin/
-RUN chmod +x /usr/local/bin/hytale-server /usr/local/bin/hytale
+COPY --from=downloader /hytale-downloader /usr/local/bin/
+RUN chmod +x /usr/local/bin/hytale-server /usr/local/bin/hytale /usr/local/bin/hytale-downloader
 
 RUN mkdir -p /server/.hytale/tokens && chown -R hytale:hytale /server
 
@@ -44,6 +56,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
-CMD ["sh", "-c", "if [ -d /server-init ] && [ ! -f /server/.initialized ]; then cp -r /server-init/* /server/ && touch /server/.initialized; fi && exec hytale-server"]
+CMD ["hytale-server"]
 
 STOPSIGNAL SIGTERM
