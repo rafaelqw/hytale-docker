@@ -1,5 +1,5 @@
 # ── Build binaries ───────────────────────────────────────────────────────────
-FROM oven/bun:1-alpine AS build
+FROM --platform=linux/amd64 oven/bun:1-alpine AS build
 
 ARG TARGETARCH
 WORKDIR /app
@@ -20,12 +20,12 @@ ARG TARGETARCH
 RUN apk add --no-cache curl unzip && \
     curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
     unzip -q /tmp/dl.zip -d /tmp && \
-    ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
+    # ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") && \
     mv /tmp/hytale-downloader-linux-$ARCH /hytale-downloader && \
     chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:25-jre-alpine
+FROM --platform=linux/amd64 eclipse-temurin:25-jre-alpine
 
 RUN apk add --no-cache tini libstdc++ gcompat unzip && \
     adduser -D -u 1000 -h /server hytale
