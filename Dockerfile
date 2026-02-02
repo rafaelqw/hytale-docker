@@ -1,3 +1,16 @@
+# ── Build binaries ───────────────────────────────────────────────────────────
+FROM oven/bun:1-alpine AS build
+
+WORKDIR /app
+
+COPY package.json bun.lock* tsconfig.json ./
+RUN bun install --frozen-lockfile 2>/dev/null || bun install
+
+COPY src/ src/
+
+RUN bun build src/main.ts --compile --target=bun-linux-x64-baseline --outfile=hytale-server && \
+    bun build src/hytale.ts --compile --target=bun-linux-x64-baseline --outfile=hytale
+
 # ── Fetch downloader ─────────────────────────────────────────────────────────
 FROM alpine:3.20 AS downloader
 
