@@ -1,5 +1,5 @@
 # ── Build binaries ───────────────────────────────────────────────────────────
-FROM --platform=linux/amd64 oven/bun:1-alpine AS build
+FROM oven/bun:1-alpine AS build
 
 ARG TARGETARCH
 WORKDIR /app
@@ -14,17 +14,18 @@ RUN BUN_TARGET=$([ "$TARGETARCH" = "arm64" ] && echo "bun-linux-arm64" || echo "
     bun build src/hytale.ts --compile --target=$BUN_TARGET --outfile=hytale
 
 # ── Fetch downloader ─────────────────────────────────────────────────────────
-FROM --platform=linux/amd64 alpine:3.20 AS downloader
+FROM alpine:3.20 AS downloader
 
+ARG TARGETARCH
 RUN apk add --no-cache curl unzip
-RUN curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip
-RUN unzip -l /tmp/dl.zip
-RUN unzip -q /tmp/dl.zip -d /tmp
-RUN mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader
-RUN chmod +x /hytale-downloader
+RUN DOWNLOADER_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "linux-arm64" || echo "linux-amd64") && \
+    curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
+    unzip -q /tmp/dl.zip -d /tmp && \
+    mv /tmp/hytale-downloader-${DOWNLOADER_ARCH} /hytale-downloader && \
+    chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
-FROM --platform=linux/amd64 eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 RUN apk add --no-cache tini libstdc++ gcompat unzip && \
     adduser -D -u 1000 -h /server hytale

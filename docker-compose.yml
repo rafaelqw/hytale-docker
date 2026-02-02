@@ -3,12 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      platforms:
-        - linux/amd64
-      args:
-        BUILDPLATFORM: linux/amd64
-        TARGETPLATFORM: linux/amd64
-        TARGETARCH: amd64
     container_name: hytale-server
     restart: unless-stopped
     stdin_open: true
