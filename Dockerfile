@@ -20,7 +20,7 @@ RUN apk add --no-cache curl unzip && \
     curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip || { echo "Download failed"; exit 1; } && \
     unzip -l /tmp/dl.zip && \
     unzip -q /tmp/dl.zip -d /tmp && \
-    mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader \
+    mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader && \
     chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
