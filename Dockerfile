@@ -1,7 +1,6 @@
 # ── Build binaries ───────────────────────────────────────────────────────────
-FROM oven/bun:1-alpine AS build
+FROM --platform=linux/amd64 oven/bun:1-alpine AS build
 
-ARG TARGETARCH
 WORKDIR /app
 
 COPY package.json bun.lock* tsconfig.json ./
@@ -9,23 +8,20 @@ RUN bun install --frozen-lockfile 2>/dev/null || bun install
 
 COPY src/ src/
 
-RUN BUN_TARGET=$([ "$TARGETARCH" = "arm64" ] && echo "bun-linux-arm64" || echo "bun-linux-x64-baseline") && \
-    bun build src/main.ts --compile --target=$BUN_TARGET --outfile=hytale-server && \
-    bun build src/hytale.ts --compile --target=$BUN_TARGET --outfile=hytale
+RUN bun build src/main.ts --compile --target=bun-linux-x64-baseline --outfile=hytale-server && \
+    bun build src/hytale.ts --compile --target=bun-linux-x64-baseline --outfile=hytale
 
 # ── Fetch downloader ─────────────────────────────────────────────────────────
-FROM alpine:3.20 AS downloader
+FROM --platform=linux/amd64 alpine:3.20 AS downloader
 
-ARG TARGETARCH
-RUN apk add --no-cache curl unzip
-RUN DOWNLOADER_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "linux-arm64" || echo "linux-amd64") && \
+RUN apk add --no-cache curl unzip && \
     curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
     unzip -q /tmp/dl.zip -d /tmp && \
-    mv /tmp/hytale-downloader-${DOWNLOADER_ARCH} /hytale-downloader && \
+    mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader && \
     chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:25-jre-alpine
+FROM --platform=linux/amd64 eclipse-temurin:25-jre-alpine
 
 RUN apk add --no-cache tini libstdc++ gcompat unzip && \
     adduser -D -u 1000 -h /server hytale
