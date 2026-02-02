@@ -16,16 +16,11 @@ RUN BUN_TARGET=$([ "$TARGETARCH" = "arm64" ] && echo "bun-linux-arm64" || echo "
 # ── Fetch downloader ─────────────────────────────────────────────────────────
 FROM --platform=linux/amd64 alpine:3.20 AS downloader
 
-ARG TARGETARCH
 RUN apk add --no-cache curl unzip && \
-    curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip && \
+    curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip || { echo "Download failed"; exit 1; } && \
+    unzip -l /tmp/dl.zip && \
     unzip -q /tmp/dl.zip -d /tmp && \
-    ls -la /tmp/ && \
-    if [ "$TARGETARCH" = "arm64" ]; then \
-        mv /tmp/hytale-downloader-linux-arm64 /hytale-downloader; \
-    else \
-        mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader; \
-    fi && \
+    mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader \
     chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
