@@ -16,12 +16,12 @@ RUN BUN_TARGET=$([ "$TARGETARCH" = "arm64" ] && echo "bun-linux-arm64" || echo "
 # ── Fetch downloader ─────────────────────────────────────────────────────────
 FROM --platform=linux/amd64 alpine:3.20 AS downloader
 
-RUN apk add --no-cache curl unzip && \
-    curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip || { echo "Download failed"; exit 1; } && \
-    unzip -l /tmp/dl.zip && \
-    unzip -q /tmp/dl.zip -d /tmp && \
-    mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader && \
-    chmod +x /hytale-downloader
+RUN apk add --no-cache curl unzip
+RUN curl -fsSL https://downloader.hytale.com/hytale-downloader.zip -o /tmp/dl.zip
+RUN unzip -l /tmp/dl.zip
+RUN unzip -q /tmp/dl.zip -d /tmp
+RUN mv /tmp/hytale-downloader-linux-amd64 /hytale-downloader
+RUN chmod +x /hytale-downloader
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM --platform=linux/amd64 eclipse-temurin:25-jre-alpine
